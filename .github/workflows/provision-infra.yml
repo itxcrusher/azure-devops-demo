@@ -1,0 +1,43 @@
+name: Provision Infrastructure
+
+# on:
+#   workflow_dispatch: {}
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_demo:
+        description: "Trigger manual run for infrastructure provisioning"
+        required: false
+        default: "true"
+
+jobs:
+  terraform:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.4.0
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Terraform Init
+        working-directory: ./terraform
+        run: terraform init
+
+      - name: Terraform Plan
+        working-directory: ./terraform
+        run: terraform plan -var-file="envs/dev.tfvars"
+
+      - name: Terraform Apply
+        working-directory: ./terraform
+        run: terraform apply -auto-approve -var-file="envs/dev.tfvars"

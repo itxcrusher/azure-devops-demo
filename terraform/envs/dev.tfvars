@@ -1,0 +1,7 @@
+location            = "East US"
+resource_group_name = "rg-demo-dev"
+acr_name            = "acrdevdemo123"
+plan_name           = "plan-demo-dev"
+app_name            = "webapp-demo-dev"
+key_vault_name      = "kv-demo-dev"
+app_insights_name   = "appi-demo-dev"

@@ -1,0 +1,50 @@
+name: Build and Deploy .NET App
+
+# on:
+#   push:
+#     paths:
+#       - "src/**"
+#       - ".github/workflows/build-and-deploy.yml"
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_demo:
+        description: "Trigger manual run for build and deploy"
+        required: false
+        default: "true"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    name: Build, Push, Deploy
+
+    env:
+      ACR_NAME: acrdevdemo123
+      APP_NAME: webapp-demo-dev
+      RESOURCE_GROUP: rg-demo-dev
+      IMAGE_TAG: ${{ github.sha }}
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Login to ACR
+        run: |
+          az acr login --name $ACR_NAME
+
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t $ACR_NAME.azurecr.io/$APP_NAME:$IMAGE_TAG ./src/hello-api
+          docker push $ACR_NAME.azurecr.io/$APP_NAME:$IMAGE_TAG
+
+      - name: Deploy to App Service
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.APP_NAME }}
+          images: ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}:${{ env.IMAGE_TAG }}
